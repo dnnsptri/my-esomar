@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my ESOMAR — Conversational AI Demo
 
-## Getting Started
+A clickable demo of a reimagined ESOMAR member portal: AI-first search, talking to a research paper, and personalized recommendations. Black and white, serif for names and subjects.
 
-First, run the development server:
+## The demo flow
+
+1. **Login** (`/`) — prefilled for Aurélie Reynier, any password works
+2. **Home** (`/home`) — "Good afternoon, Aurélie" + conversational search bar
+3. **Search** (`/search?q=…`) — every query resolves to the rehearsed topic "AI in market research": videos, research papers, companies
+4. **Paper detail** (`/paper/synthetic-respondents`) — select any passage → "Ask about this" → split-screen chat with the paper (bottom sheet on mobile)
+5. **Home again** — "Hi Aurélie, since you've looked into AI in market research:" with recommendations
+
+There is a subtle **reset demo** link at the bottom of the home screen. It clears the fake session so you can run the flow again from login.
+
+## Running it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How the fake parts work (and how to make them real)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Session & history**: localStorage only (`lib/session.ts`). No backend.
+- **Content**: everything lives in `lib/content.ts`, keyed by topic. Swap in real papers/videos/companies there; the UI only knows the types.
+- **Search**: `findTopicForQuery()` in `lib/content.ts` currently returns the rehearsed topic for any query. Add topics and keyword matching there.
+- **Chat**: `/api/chat` streams plain text. Without an API key it streams scripted answers from `lib/mock-chat.ts` (keyword-matched, word-by-word with delays). With `ANTHROPIC_API_KEY` set, it calls Claude with the full paper text as context — the UI does not change.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To go live with the real model, create `.env.local` (or set the variable on Vercel):
 
-## Learn More
+```
+ANTHROPIC_API_KEY=sk-ant-…
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deploying
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx vercel
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set `ANTHROPIC_API_KEY` in the Vercel project settings when you want real answers instead of scripted ones.

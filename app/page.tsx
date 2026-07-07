@@ -1,65 +1,85 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { setUser } from "@/lib/session";
+import Wordmark from "@/components/Wordmark";
+import Reveal from "@/components/Reveal";
+
+// Screen 1 — fake login. Credentials are prefilled for Aurélie and any
+// password works; submitting just stores the user and moves on.
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("aurelie.reynier@insightlab.fr");
+  const [password, setPassword] = useState("••••••••••");
+  const [signingIn, setSigningIn] = useState(false);
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSigningIn(true);
+    setUser({
+      firstName: "Aurélie",
+      lastName: "Reynier",
+      email,
+    });
+    // Brief pause so the button state reads as a real sign-in
+    setTimeout(() => router.push("/home"), 450);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex flex-1 items-center justify-center px-5">
+      <div className="w-full max-w-sm">
+        <Reveal className="text-center">
+          <Wordmark size="lg" />
+          <p className="mt-3 text-sm text-neutral-500">
+            The member portal for the global insights community
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        </Reveal>
+
+        <Reveal delay={120}>
+          <form onSubmit={submit} className="mt-10 space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.15em] text-neutral-500">
+                Email
+              </span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 w-full rounded-xl border border-neutral-900 bg-white px-4 outline-none focus:shadow-[0_0_0_1px_#111] transition-shadow"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs uppercase tracking-[0.15em] text-neutral-500">
+                Password
+              </span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 w-full rounded-xl border border-neutral-900 bg-white px-4 outline-none focus:shadow-[0_0_0_1px_#111] transition-shadow"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={signingIn}
+              className="h-12 w-full rounded-xl bg-neutral-900 font-medium text-white hover:bg-neutral-700 disabled:opacity-60 transition-colors"
+            >
+              {signingIn ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </Reveal>
+
+        <Reveal delay={240}>
+          <p className="mt-6 text-center text-xs text-neutral-400">
+            Signing in as{" "}
+            <span className="font-serif italic text-sm text-neutral-600">
+              Aurélie Reynier
+            </span>{" "}
+            · demo
+          </p>
+        </Reveal>
+      </div>
+    </main>
   );
 }
