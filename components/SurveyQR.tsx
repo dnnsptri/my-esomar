@@ -77,14 +77,18 @@ export default function SurveyQR() {
   // Hide on the questionnaire itself and on the bare login screen
   if (pathname?.startsWith("/survey") || pathname === "/") return null;
 
+  // In normal flow at the bottom of the document (not a fixed overlay), so
+  // it sits below the page content and never covers a long detail page.
   return (
-    <Link
-      href="/survey"
-      aria-label="Share your feedback"
-      title="Share your feedback"
-      className="fixed bottom-5 left-1/2 z-40 h-14 w-14 -translate-x-1/2 overflow-hidden rounded-lg border border-neutral-900 bg-white p-1 shadow-lg transition-transform hover:-translate-y-0.5"
-    >
-      <FakeQR className="h-full w-full" />
-    </Link>
+    <div className="flex justify-center px-5 pb-10 pt-6">
+      <Link
+        href="/survey"
+        aria-label="Share your feedback"
+        title="Share your feedback"
+        className="block h-14 w-14 overflow-hidden rounded-lg border border-neutral-900 bg-white p-1 shadow-sm transition-transform hover:-translate-y-0.5"
+      >
+        <FakeQR className="h-full w-full" />
+      </Link>
+    </div>
   );
 }

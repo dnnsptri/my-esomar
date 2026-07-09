@@ -3,16 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Big conversational search bar (Google/ChatGPT style). Any query routes to
-// /search?q=… — the results page decides what to show.
+// Big conversational search bar (Google/ChatGPT style). By default a query
+// routes to /search?q=… and the results page decides what to show. Pass
+// `onSubmitQuery` to instead answer conversationally in place — the home
+// page uses this to behave like an AI assistant (Google's AI mode).
 export default function SearchBar({
   size = "lg",
   initialQuery = "",
   autoFocus = false,
+  onSubmitQuery,
 }: {
   size?: "lg" | "sm";
   initialQuery?: string;
   autoFocus?: boolean;
+  onSubmitQuery?: (query: string) => void;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -21,6 +25,11 @@ export default function SearchBar({
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
+    if (onSubmitQuery) {
+      onSubmitQuery(q);
+      setQuery(""); // hand off to the conversation; clear for the next prompt
+      return;
+    }
     router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 

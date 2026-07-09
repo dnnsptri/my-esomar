@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Instrument_Serif } from "next/font/google";
 import ChatProvider from "@/components/ChatProvider";
 import SurveyQR from "@/components/SurveyQR";
+import ResetDemo from "@/components/ResetDemo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,6 +40,8 @@ export default function RootLayout({
         <ChatProvider>{children}</ChatProvider>
         {/* Demo feedback "QR" — bottom-center, links to the questionnaire */}
         <SurveyQR />
+        {/* Demo reset — bottom-left, on every page */}
+        <ResetDemo />
       </body>
     </html>
   );

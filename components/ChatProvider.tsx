@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Paper } from "@/lib/content";
 import ChatPanel from "./ChatPanel";
 
@@ -17,6 +18,9 @@ type ChatContextValue = {
   // Quietly change what the panel is scoped to (e.g. on page navigation)
   // without opening anything or attaching a passage.
   setScope: (paper: Paper | null) => void;
+  // Open the panel and immediately send `question` as the first message —
+  // the home search bar uses this to answer conversationally in place.
+  ask: (question: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -28,10 +32,14 @@ export function useChat() {
 }
 
 export default function ChatProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [paper, setPaper] = useState<Paper | null>(null);
   const [selection, setSelection] = useState<string | null>(null);
   // Bumped on every askAbout so the panel notices repeat selections
   const [selectionKey, setSelectionKey] = useState(0);
+  // A question to auto-send when the panel opens (from the home search bar)
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const [askKey, setAskKey] = useState(0);
   const [open, setOpen] = useState(false);
 
   const askAbout = useCallback((p: Paper | null, sel: string | null) => {
@@ -43,8 +51,19 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
 
   const setScope = useCallback((p: Paper | null) => setPaper(p), []);
 
+  const ask = useCallback((question: string) => {
+    setPaper(null); // general assistant, no paper in scope
+    setPendingQuestion(question);
+    setAskKey((k) => k + 1);
+    setOpen(true);
+  }, []);
+
+  // On the home page the big center search bar is the way to start a
+  // conversation, so the redundant floating "Ask me" pill is hidden there.
+  const hidePill = pathname === "/home";
+
   return (
-    <ChatContext.Provider value={{ askAbout, setScope }}>
+    <ChatContext.Provider value={{ askAbout, setScope, ask }}>
       {/* flex + flex-col here mirrors what <body> used to provide directly:
           several pages (login, home, search) have a root `<main
           className="flex-1 ...">` that relies on being a flex-column child
@@ -61,8 +80,9 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
         {children}
       </div>
 
-      {/* Closed: just the entry point, always within reach */}
-      {!open && (
+      {/* Closed: just the entry point, always within reach — except on the
+          home page, where the center search bar is the conversation opener */}
+      {!open && !hidePill && (
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-neutral-900 bg-white px-5 py-3 text-sm shadow-lg transition-colors hover:bg-neutral-900 hover:text-white"
@@ -91,6 +111,8 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
           paper={paper}
           selection={selection}
           selectionKey={selectionKey}
+          initialQuestion={pendingQuestion}
+          askKey={askKey}
           onClose={() => setOpen(false)}
         />
       </div>

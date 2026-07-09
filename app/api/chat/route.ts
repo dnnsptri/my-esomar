@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   // purely an environment variable change (ANTHROPIC_API_KEY on Vercel).
   if (!process.env.ANTHROPIC_API_KEY) {
     const answer = found
-      ? getMockAnswer(lastUser.content, body.selection ?? undefined)
+      ? getMockAnswer(lastUser.content, found.paper, body.selection ?? undefined)
       : getGenericMockAnswer(lastUser.content);
     return new Response(streamMockAnswer(answer), { headers });
   }

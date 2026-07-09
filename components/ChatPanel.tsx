@@ -13,15 +13,21 @@ type Message = { role: "user" | "assistant"; content: string };
 // `paper` scopes the conversation; null means the general portal assistant.
 // `selection` + `selectionKey` hand over a highlighted passage: the passage
 // is quoted in the panel and attached to the next question only.
+// `initialQuestion` + `askKey` auto-send a first message when the panel is
+// opened from the home search bar (conversational, Google-AI-mode style).
 export default function ChatPanel({
   paper,
   selection,
   selectionKey,
+  initialQuestion,
+  askKey = 0,
   onClose,
 }: {
   paper: Paper | null;
   selection: string | null;
   selectionKey: number;
+  initialQuestion?: string | null;
+  askKey?: number;
   onClose?: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,6 +37,8 @@ export default function ChatPanel({
   const [pending, setPending] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Guards the auto-send effect so a given ask fires exactly once
+  const lastAskRef = useRef(0);
 
   // A new selection arrived from a page → quote it and focus the composer
   useEffect(() => {
@@ -39,6 +47,15 @@ export default function ChatPanel({
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionKey]);
+
+  // The home search bar handed us a question → send it as the next message,
+  // building up the conversation.
+  useEffect(() => {
+    if (!askKey || askKey === lastAskRef.current) return;
+    lastAskRef.current = askKey;
+    if (initialQuestion && initialQuestion.trim()) send(initialQuestion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [askKey]);
 
   // Keep the newest message in view while streaming
   useEffect(() => {

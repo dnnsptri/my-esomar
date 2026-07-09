@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { findTopicForQuery, type Recommendation } from "@/lib/content";
-import { clearAll, getUser, getViewed, type User, type ViewedItem } from "@/lib/session";
+import { getUser, getViewed, type User, type ViewedItem } from "@/lib/session";
 import Header from "@/components/Header";
 import Reveal from "@/components/Reveal";
 import SearchBar from "@/components/SearchBar";
+import { useChat } from "@/components/ChatProvider";
 
 // A mix of time-appropriate and international greetings — ESOMAR is a
 // global community, so the "same old good morning" gets old fast. Picked
@@ -30,6 +31,7 @@ const glyph: Record<Recommendation["kind"], string> = {
 // same route, the localStorage history decides which story the home tells.
 export default function HomePage() {
   const router = useRouter();
+  const { ask } = useChat();
   const [user, setUserState] = useState<User | null>(null);
   const [viewed, setViewed] = useState<ViewedItem[]>([]);
   const [ready, setReady] = useState(false);
@@ -85,7 +87,7 @@ export default function HomePage() {
           </Reveal>
 
           <Reveal delay={150} className="mt-8">
-            <SearchBar size="lg" autoFocus={!lastViewed} />
+            <SearchBar size="lg" autoFocus={!lastViewed} onSubmitQuery={ask} />
           </Reveal>
 
           {lastViewed ? (
@@ -130,19 +132,6 @@ export default function HomePage() {
           )}
         </div>
       </main>
-
-      {/* Subtle demo reset: clears the fake session and history */}
-      <footer className="flex justify-center pb-6">
-        <button
-          onClick={() => {
-            clearAll();
-            router.push("/");
-          }}
-          className="text-xs text-neutral-300 hover:text-neutral-600 transition-colors"
-        >
-          reset demo
-        </button>
-      </footer>
     </>
   );
 }
