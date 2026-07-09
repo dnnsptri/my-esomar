@@ -200,7 +200,8 @@ export default function ChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={paper ? "Ask about this paper…" : "Ask me anything…"}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400"
+            // text-base (16px) avoids iOS auto-zoom when the field is focused
+            className="flex-1 bg-transparent text-base outline-none placeholder:text-neutral-400"
           />
           <button
             type="submit"
@@ -208,9 +209,8 @@ export default function ChatPanel({
             aria-label="Send"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white transition-colors hover:bg-neutral-700 disabled:opacity-40"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path d="M8 13V3M8 3L3.5 7.5M8 3l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {/* "?" — matches the home search bar's ask button */}
+            <span className="text-base font-semibold leading-none">?</span>
           </button>
         </div>
       </form>

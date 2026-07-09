@@ -53,4 +53,7 @@ export function addViewed(item: Omit<ViewedItem, "at">) {
 export function clearAll() {
   window.localStorage.removeItem(USER_KEY);
   window.localStorage.removeItem(VIEWED_KEY);
+  // Also forget cookie consent so a reset gives a true first-visit run,
+  // cookie bar and all (see components/CookieBar.tsx).
+  window.localStorage.removeItem("myesomar.cookies");
 }

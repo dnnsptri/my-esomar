@@ -79,8 +79,9 @@ export default function SurveyQR() {
 
   // In normal flow at the bottom of the document (not a fixed overlay), so
   // it sits below the page content and never covers a long detail page.
+  // ResetDemo renders right after this, so it lands directly under the QR.
   return (
-    <div className="flex justify-center px-5 pb-10 pt-6">
+    <div className="flex justify-center px-5 pt-8">
       <Link
         href="/survey"
         aria-label="Share your feedback"

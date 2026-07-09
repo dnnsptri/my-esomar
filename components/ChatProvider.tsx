@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { Paper } from "@/lib/content";
 import ChatPanel from "./ChatPanel";
@@ -41,6 +41,17 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [askKey, setAskKey] = useState(0);
   const [open, setOpen] = useState(false);
+  // Bumped to remount ChatPanel and wipe its conversation on demo reset.
+  const [chatKey, setChatKey] = useState(0);
+
+  // "reset demo" navigates back to login ("/") — close the chat window and
+  // clear the conversation so the next run starts clean.
+  useEffect(() => {
+    if (pathname === "/") {
+      setOpen(false);
+      setChatKey((k) => k + 1);
+    }
+  }, [pathname]);
 
   const askAbout = useCallback((p: Paper | null, sel: string | null) => {
     setPaper(p);
@@ -58,9 +69,9 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
     setOpen(true);
   }, []);
 
-  // On the home page the big center search bar is the way to start a
-  // conversation, so the redundant floating "Ask me" pill is hidden there.
-  const hidePill = pathname === "/home";
+  // Hide the floating "Ask me" pill where it doesn't belong: on login (no
+  // session yet) and on home (the center search bar is the opener there).
+  const hidePill = pathname === "/" || pathname === "/home";
 
   return (
     <ChatContext.Provider value={{ askAbout, setScope, ask }}>
@@ -108,6 +119,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
         } fixed inset-x-0 bottom-0 z-50 h-[72vh] overflow-hidden rounded-t-3xl border-t border-neutral-900 bg-white shadow-2xl lg:inset-x-auto lg:bottom-6 lg:right-6 lg:top-6 lg:h-auto lg:w-[25vw] lg:min-w-[340px] lg:rounded-2xl lg:border lg:border-neutral-900`}
       >
         <ChatPanel
+          key={chatKey}
           paper={paper}
           selection={selection}
           selectionKey={selectionKey}

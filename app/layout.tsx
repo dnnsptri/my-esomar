@@ -3,6 +3,7 @@ import { Geist, Instrument_Serif } from "next/font/google";
 import ChatProvider from "@/components/ChatProvider";
 import SurveyQR from "@/components/SurveyQR";
 import ResetDemo from "@/components/ResetDemo";
+import CookieBar from "@/components/CookieBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +43,8 @@ export default function RootLayout({
         <SurveyQR />
         {/* Demo reset — bottom-left, on every page */}
         <ResetDemo />
+        {/* Simplest functional-cookie consent bar */}
+        <CookieBar />
       </body>
     </html>
   );
