@@ -44,6 +44,53 @@ body {
   animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Video modal player: the illustration itself animates while "playing".
+   Play state is toggled per element via inline animation-play-state. */
+@keyframes ring-ripple {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.35; }
+}
+.pattern-ring {
+  /* view-box makes 50% 50% the center of the SVG, where the rings sit */
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: ring-ripple 3s ease-in-out infinite;
+}
+
+@keyframes line-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(24px); } /* exactly one line spacing → seamless loop */
+}
+.pattern-lines {
+  animation: line-drift 1.6s linear infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 1; }
+}
+.pattern-dot {
+  animation: dot-pulse 2.4s ease-in-out infinite;
+}
+
+/* Audio waveform bars — the "Listen" player's illustration */
+@keyframes bar-pulse {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+.pattern-bar {
+  animation: bar-pulse 1.1s ease-in-out infinite;
+}
+
+/* Fake playback progress; long enough that it never finishes mid-demo */
+@keyframes progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.progress-fill {
+  animation: progress-fill 240s linear forwards;
+}
+
 /* Blinking caret for the streaming chat answer */
 @keyframes blink {
   0%, 100% { opacity: 1; }

@@ -5,23 +5,40 @@ import type { Paper } from "@/lib/content";
 
 type Message = { role: "user" | "assistant"; content: string };
 
-// Split-screen "Ask" panel. Streams answers from /api/chat — the endpoint
-// decides whether the answer is scripted (demo mode) or a real LLM call,
-// so this component never changes when the API key is added.
+// The persistent "Ask" panel (see ChatProvider for where it lives).
+// Streams answers from /api/chat — the endpoint decides whether the answer
+// is scripted (demo mode) or a real LLM call, so this component never
+// changes when the API key is added.
+//
+// `paper` scopes the conversation; null means the general portal assistant.
+// `selection` + `selectionKey` hand over a highlighted passage: the passage
+// is quoted in the panel and attached to the next question only.
 export default function ChatPanel({
   paper,
   selection,
+  selectionKey,
   onClose,
 }: {
-  paper: Paper;
+  paper: Paper | null;
   selection: string | null;
-  onClose: () => void;
+  selectionKey: number;
+  onClose?: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  // Passage waiting to be attached to the next question
+  const [pending, setPending] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const sentSelectionRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // A new selection arrived from a page → quote it and focus the composer
+  useEffect(() => {
+    if (selectionKey === 0) return;
+    setPending(selection);
+    inputRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionKey]);
 
   // Keep the newest message in view while streaming
   useEffect(() => {
@@ -37,10 +54,10 @@ export default function ChatPanel({
     setInput("");
     setStreaming(true);
 
-    // Only attach the highlighted passage to the first question — after
-    // that the conversation is about the whole paper.
-    const attachSelection = selection && !sentSelectionRef.current ? selection : null;
-    sentSelectionRef.current = true;
+    // Attach the highlighted passage to this question only — after that
+    // the conversation is about the paper (or portal) as a whole.
+    const attachSelection = pending;
+    setPending(null);
 
     try {
       const res = await fetch("/api/chat", {
@@ -48,7 +65,7 @@ export default function ChatPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: history,
-          paperSlug: paper.slug,
+          paperSlug: paper?.slug ?? null,
           selection: attachSelection,
         }),
       });
@@ -74,52 +91,48 @@ export default function ChatPanel({
     }
   }
 
-  const suggestions = [
-    "Summarise this for me",
-    "How was this studied?",
-    "What are the limitations?",
-  ];
+  const suggestions = paper
+    ? ["Summarise this for me", "How was this studied?", "What are the limitations?"]
+    : ["What's new in AI and market research?", "Recommend a paper to read", "What is Esomar?"];
 
   return (
     <aside className="flex h-full flex-col bg-white">
       {/* Panel header */}
       <div className="flex items-center justify-between border-b border-neutral-900 px-5 py-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.15em] text-neutral-500">Ask</p>
-          <p className="font-serif italic text-lg leading-tight line-clamp-1">{paper.title}</p>
+          <p className="font-serif italic text-lg leading-tight line-clamp-1">
+            {paper ? paper.title : "my Esomar assistant"}
+          </p>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Close chat"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors"
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-        </button>
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label="Close chat"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-        {selection && (
-          <blockquote className="border-l-2 border-neutral-900 pl-3 text-sm italic text-neutral-600">
-            “{selection.length > 220 ? `${selection.slice(0, 220)}…` : selection}”
-          </blockquote>
-        )}
-
-        {messages.length === 0 && (
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+        {messages.length === 0 && !pending && (
           <div className="space-y-2">
             <p className="text-sm text-neutral-500">
-              {selection
-                ? "Ask anything about the passage you highlighted, or the paper as a whole."
-                : "Ask anything about this paper."}
+              {paper
+                ? "Ask anything about this paper, or highlight a passage to ask about it."
+                : "Ask anything — papers, videos, companies, or the industry at large."}
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-neutral-300 px-3 py-1.5 text-sm hover:border-neutral-900 transition-colors"
+                  className="rounded-full border border-neutral-300 px-3 py-1.5 text-sm transition-colors hover:border-neutral-900"
                 >
                   {s}
                 </button>
@@ -144,6 +157,16 @@ export default function ChatPanel({
             </p>
           );
         })}
+
+        {/* Passage queued for the next question */}
+        {pending && (
+          <blockquote className="border-l-2 border-neutral-900 pl-3 text-sm italic text-neutral-600">
+            “{pending.length > 220 ? `${pending.slice(0, 220)}…` : pending}”
+            <span className="mt-1 block not-italic text-xs text-neutral-400">
+              Attached to your next question
+            </span>
+          </blockquote>
+        )}
       </div>
 
       {/* Composer */}
@@ -154,19 +177,19 @@ export default function ChatPanel({
         }}
         className="border-t border-neutral-900 p-4"
       >
-        <div className="flex items-center gap-2 rounded-full border border-neutral-900 pl-4 pr-1.5 h-11 focus-within:shadow-[0_0_0_1px_#111] transition-shadow">
+        <div className="flex h-11 items-center gap-2 rounded-full border border-neutral-900 pl-4 pr-1.5 transition-shadow focus-within:shadow-[0_0_0_1px_#111]">
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about this paper…"
-            autoFocus
+            placeholder={paper ? "Ask about this paper…" : "Ask me anything…"}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400"
           />
           <button
             type="submit"
             disabled={streaming}
             aria-label="Send"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white hover:bg-neutral-700 disabled:opacity-40 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white transition-colors hover:bg-neutral-700 disabled:opacity-40"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path d="M8 13V3M8 3L3.5 7.5M8 3l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

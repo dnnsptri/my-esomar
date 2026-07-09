@@ -1,6 +1,6 @@
-# my ESOMAR — Conversational AI Demo
+# my Esomar — Conversational AI Demo
 
-A clickable demo of a reimagined ESOMAR member portal: AI-first search, talking to a research paper, and personalized recommendations. Black and white, serif for names and subjects.
+A clickable demo of a reimagined Esomar member portal: AI-first search, talking to a research paper, and personalized recommendations. Black and white, serif for names and subjects.
 
 ## The demo flow
 

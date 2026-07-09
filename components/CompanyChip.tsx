@@ -10,14 +10,17 @@ const logoCls: Record<Company["logoStyle"], string> = {
 
 export default function CompanyChip({ company }: { company: Company }) {
   return (
-    <div
+    <a
+      href={company.profileUrl}
+      target="_blank"
+      rel="noopener noreferrer"
       className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-neutral-900 px-6 py-5 text-center transition-colors hover:bg-neutral-900 hover:text-white"
-      title={company.tagline}
+      title={`${company.tagline} — view on the Esomar directory`}
     >
       <span className={logoCls[company.logoStyle]}>{company.name}</span>
       <span className="text-[11px] text-neutral-500 group-hover:text-neutral-300">
         {company.tagline}
       </span>
-    </div>
+    </a>
   );
 }

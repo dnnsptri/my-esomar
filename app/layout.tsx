@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Instrument_Serif } from "next/font/google";
+import ChatProvider from "@/components/ChatProvider";
+import SurveyQR from "@/components/SurveyQR";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,8 +19,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "my ESOMAR",
-  description: "Conversational AI demo for the ESOMAR member portal",
+  title: "my Esomar",
+  description: "Conversational AI demo for the Esomar member portal",
 };
 
 export default function RootLayout({
@@ -31,7 +33,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* The conversational agent floats over every page — an "Ask me"
+            pill that expands into a panel layer (see ChatProvider) */}
+        <ChatProvider>{children}</ChatProvider>
+        {/* Demo feedback "QR" — bottom-center, links to the questionnaire */}
+        <SurveyQR />
+      </body>
     </html>
   );
 }

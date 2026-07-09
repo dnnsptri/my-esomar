@@ -21,7 +21,7 @@ const rules: Rule[] = [
   {
     keywords: ["limit", "caveat", "bias", "risk", "problem", "weakness", "critic"],
     answer:
-      "The paper names three limitations: the persona-conditioning techniques reflect early-2025 practice and may not generalise to newer systems; both markets studied are data-rich Western markets that are heavily represented in LLM training data, so divergence is plausibly larger elsewhere; and only quantitative survey formats were tested — qualitative and conversational uses raise separate validity questions. The authors also flag a subtler risk: synthetic data that is plausibly good creates misplaced confidence in exactly the use cases where it fails.",
+      "The paper names three limitations: the persona-conditioning techniques reflect early-2026 practice and may not generalise to newer systems; both markets studied are data-rich Western markets that are heavily represented in LLM training data, so divergence is plausibly larger elsewhere; and only quantitative survey formats were tested — qualitative and conversational uses raise separate validity questions. The authors also flag a subtler risk: synthetic data that is plausibly good creates misplaced confidence in exactly the use cases where it fails.",
   },
   {
     keywords: ["use", "practice", "when", "should i", "recommend", "apply", "safe", "framework", "decision"],
@@ -40,12 +40,68 @@ const rules: Rule[] = [
   },
 ];
 
-const fallback =
-  "That touches on something the paper addresses indirectly. The core tension the authors keep returning to is that synthetic panels mirror the centre of human opinion very well — averages within about 4 points — while systematically missing variance, minority viewpoints and novelty. Whether that matters depends entirely on your use case, which is why they propose validating synthetic respondents per application rather than trusting them wholesale. Would you like the methodology or the practical framework in more detail?";
+// Out-of-scope questions always get this exact line (per demo script)
+const fallback = "I have no verified Esomar work on that yet.";
+
+// Whole-word match — plain .includes() let "ai" match inside "explain" and
+// let "what is" match nearly any question (e.g. "What is the weather in
+// Valencia?"), so off-topic questions were slipping past the fallback.
+function hasWord(text: string, phrase: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`, "i").test(text);
+}
+
+// Gate before any rule matching: the question must contain something
+// actually on-topic for this demo, otherwise it's out of scope regardless
+// of which rule keywords happen to overlap.
+const paperTopicAnchors = [
+  "synthetic", "llm", "ai", "panel", "respondent", "survey", "research",
+  "data", "method", "finding", "result", "limitation", "paper", "study",
+  "wording", "prompt", "sample", "distribution", "variance", "minority",
+  "framework", "validity", "esomar",
+];
+
+const genericTopicAnchors = [
+  "esomar", "ai", "market research", "paper", "video", "company", "companies",
+  "research", "panel", "survey", "insight", "member", "directory", "congress",
+  "webinar", "festival", "synthetic", "llm", "respondent",
+];
+
+// Scripted answers for the general assistant (persistent sidebar with no
+// paper in scope). Keyed to the panel's suggestion chips plus a few
+// obvious audience questions.
+const genericRules: Rule[] = [
+  {
+    keywords: ["ai", "market research", "happening", "trend", "new"],
+    answer:
+      "The conversation right now centres on synthetic respondents — LLM-simulated survey panels — and whether their answers can be trusted. There's a strong topic hub on it here: try searching for \"AI in market research\" to get the keynote debate from Congress 2026, the paper on validity and limits of simulated panels, and the companies building in this space. Data quality in the age of generative AI is the other thread everyone is pulling on.",
+  },
+  {
+    keywords: ["recommend", "read", "paper", "start"],
+    answer:
+      "Start with \"Synthetic Respondents: Validity and Limits of LLM-Simulated Panels\" by Ortiz-Kramer and Adeyemi (2026). It's a 14-minute read and the most-discussed paper in the AI topic right now: three parallel studies comparing simulated panels with matched human samples, ending in a practical framework for when synthetic data is safe to use. Open it and highlight any passage — I can answer questions about it directly.",
+  },
+  {
+    keywords: ["esomar", "what is", "who are", "member"],
+    answer:
+      "Esomar is the global community for insights, analytics and market research professionals — setting professional standards, publishing research, and connecting practitioners across 130+ countries since 1947. This portal is your member home: search any topic to get curated videos, research papers and companies, and ask me anything along the way.",
+  },
+];
+
+// Out-of-scope questions always get this exact line (per demo script)
+const genericFallback = "I have no verified Esomar work on that yet.";
+
+export function getGenericMockAnswer(question: string): string {
+  const q = question.toLowerCase();
+  if (!genericTopicAnchors.some((a) => hasWord(q, a))) return genericFallback;
+  const rule = genericRules.find((r) => r.keywords.some((k) => hasWord(q, k)));
+  return rule ? rule.answer : genericFallback;
+}
 
 export function getMockAnswer(question: string, selection?: string): string {
   const q = question.toLowerCase();
-  const rule = rules.find((r) => r.keywords.some((k) => q.includes(k)));
+  const onTopic = paperTopicAnchors.some((a) => hasWord(q, a));
+  const rule = onTopic ? rules.find((r) => r.keywords.some((k) => hasWord(q, k))) : null;
   const answer = rule ? rule.answer : fallback;
 
   // Acknowledge the highlighted passage on the first exchange so the

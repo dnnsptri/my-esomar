@@ -10,7 +10,7 @@ import Reveal from "@/components/Reveal";
 // password works; submitting just stores the user and moves on.
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("aurelie.reynier@insightlab.fr");
+  const [email, setEmail] = useState("aurelie.reynier@esomar.org");
   const [password, setPassword] = useState("••••••••••");
   const [signingIn, setSigningIn] = useState(false);
 

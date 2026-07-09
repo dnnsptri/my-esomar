@@ -1,11 +1,13 @@
 import { findPaper, paperFullText } from "@/lib/content";
-import { getMockAnswer } from "@/lib/mock-chat";
+import { getGenericMockAnswer, getMockAnswer } from "@/lib/mock-chat";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
 type ChatRequest = {
   messages: ChatMessage[];
-  paperSlug: string;
+  // Null/absent → the general portal assistant (persistent sidebar with
+  // no paper in scope); a slug → conversation grounded in that paper.
+  paperSlug?: string | null;
   selection?: string | null;
 };
 
@@ -30,8 +32,8 @@ function streamMockAnswer(answer: string): ReadableStream<Uint8Array> {
 
 export async function POST(req: Request) {
   const body = (await req.json()) as ChatRequest;
-  const found = findPaper(body.paperSlug);
-  if (!found) {
+  const found = body.paperSlug ? findPaper(body.paperSlug) : null;
+  if (body.paperSlug && !found) {
     return new Response("Unknown paper", { status: 404 });
   }
   const lastUser = [...(body.messages ?? [])].reverse().find((m) => m.role === "user");
@@ -49,7 +51,9 @@ export async function POST(req: Request) {
   // The client streams plain text either way, so flipping modes is
   // purely an environment variable change (ANTHROPIC_API_KEY on Vercel).
   if (!process.env.ANTHROPIC_API_KEY) {
-    const answer = getMockAnswer(lastUser.content, body.selection ?? undefined);
+    const answer = found
+      ? getMockAnswer(lastUser.content, body.selection ?? undefined)
+      : getGenericMockAnswer(lastUser.content);
     return new Response(streamMockAnswer(answer), { headers });
   }
 
@@ -57,12 +61,16 @@ export async function POST(req: Request) {
   const client = new Anthropic();
 
   const system = [
-    "You are the research assistant inside the ESOMAR member portal. Answer questions about the research paper below.",
-    "Be concise (a short paragraph or two), factual, and grounded strictly in the paper. If the paper does not cover something, say so.",
+    found
+      ? "You are the research assistant inside the Esomar member portal. Answer questions about the research paper below."
+      : "You are the assistant inside the Esomar member portal. Help members explore market research topics, papers, videos, and companies. Esomar is the global community for insights, analytics and market research professionals.",
+    "Be concise (a short paragraph or two), factual, and grounded" +
+      (found ? " strictly in the paper." : "."),
+    'If a question is out of scope (not covered by the paper or by Esomar\'s published work), reply with exactly: "I have no verified Esomar work on that yet."',
     body.selection
       ? `The member highlighted this passage and is asking about it:\n"""${body.selection}"""`
       : null,
-    `THE PAPER:\n${paperFullText(found.paper)}`,
+    found ? `THE PAPER:\n${paperFullText(found.paper)}` : null,
   ]
     .filter(Boolean)
     .join("\n\n");
