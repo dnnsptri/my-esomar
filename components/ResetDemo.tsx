@@ -10,8 +10,14 @@ import { clearAll } from "@/lib/session";
 export default function ResetDemo() {
   const router = useRouter();
   const pathname = usePathname();
-  // Nothing to reset before signing in — hide on the login screen.
-  if (pathname === "/") return null;
+  // Nothing to reset before signing in — show the version only on the login screen.
+  if (pathname === "/") {
+    return (
+      <div className="flex justify-center px-5 pb-8 pt-3">
+        <span className="text-xs text-neutral-300">v08</span>
+      </div>
+    );
+  }
   return (
     <div className="flex justify-center px-5 pb-8 pt-3">
       <button
@@ -21,7 +27,7 @@ export default function ResetDemo() {
         }}
         className="text-xs text-neutral-300 transition-colors hover:text-neutral-600"
       >
-        reset demo
+        v08 - Reset demo
       </button>
     </div>
   );
